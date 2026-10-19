@@ -1,5 +1,321 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+  const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+  function playSound(type) {
+    if (audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    if (type === 'correct') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.25);
+      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.25);
+    } else if (type === 'wrong') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(160, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(60, audioCtx.currentTime + 0.35);
+      gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.35);
+    } else if (type === 'click') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.05);
+    }
+  }
+
+  // Banco de perguntas expandido para permitir jogabilidade infinita
+  const questionBank = {
+    facil: [
+      { question: "Qual é o maior planeta do Sistema Solar?", options: ["Terra", "Júpiter", "Marte", "Saturno"], answer: 1 },
+      { question: "Qual planeta é conhecido como o 'Planeta Vermelho'?", options: ["Marte", "Vênus", "Mercúrio", "Netuno"], answer: 0 },
+      { question: "O Sol é classificado astrofisicamente como:", options: ["Um planeta", "Um cometa", "Uma estrela", "Um satélite"], answer: 2 },
+      { question: "Qual planeta possui anéis exuberantes e bem visíveis?", options: ["Urano", "Saturno", "Terra", "Vênus"], answer: 1 },
+      { question: "Qual é o planeta em que vivemos?", options: ["Marte", "Terra", "Júpiter", "Vênus"], answer: 1 },
+      { question: "Qual corpo celeste orbita ao redor de um planeta?", options: ["Satélite natural", "Estrela", "Galáxia", "Constelação"], answer: 0 },
+      { question: "Qual é a estrela mais próxima da Terra?", options: ["Alfa Centauri", "Sol", "Sirius", "Betelgeuse"], answer: 1 },
+      { question: "Qual destes planetas é mais próximo do Sol?", options: ["Terra", "Marte", "Mercúrio", "Júpiter"], answer: 2 }
+    ],
+    medio: [
+      { question: "Qual é o planeta mais quente do Sistema Solar?", options: ["Mercúrio", "Vênus", "Marte", "Júpiter"], answer: 1 },
+      { question: "O movimento que a Terra faz ao redor do Sol chama-se:", options: ["Rotação", "Translação", "Gravidade", "Precessão"], answer: 1 },
+      { question: "Quanto tempo a luz do Sol leva para chegar até a Terra?", options: ["Aproximadamente 8 minutos", "1 hora", "Instantaneamente", "24 horas"], answer: 0 },
+      { question: "Qual é o único satélite natural da Terra?", options: ["Fobos", "Europa", "Lua", "Titã"], answer: 2 },
+      { question: "O movimento de rotação da Terra origina:", options: ["As estações do ano", "Os dias e as noites", "Os eclipses", "As fases da lua"], answer: 1 },
+      { question: "Qual camada de ar protege a Terra dos raios solares nocivos?", options: ["Litosfera", "Atmosfera", "Hidrosfera", "Biosfera"], answer: 1 },
+      { question: "Qual planeta tem uma atmosfera rica em gás carbônico com efeito estufa extremo?", options: ["Marte", "Vênus", "Mercúrio", "Urano"], answer: 1 },
+      { question: "Quantos planetas formam o Sistema Solar?", options: ["7", "8", "9", "10"], answer: 1 }
+    ],
+    dificil: [
+      { question: "Qual planeta do Sistema Solar tem a rotação mais rápida (dia mais curto)?", options: ["Terra", "Júpiter", "Marte", "Netuno"], answer: 1 },
+      { question: "Em qual planeta está localizado o Monte Olimpo?", options: ["Vênus", "Marte", "Mercúrio", "Júpiter"], answer: 1 },
+      { question: "Qual destes planetas é classificado como 'gigante gelado'?", options: ["Saturno", "Júpiter", "Urano", "Marte"], answer: 2 },
+      { question: "O cinturão de asteroides principal fica localizado entre quais planetas?", options: ["Terra e Marte", "Marte e Júpiter", "Júpiter e Saturno", "Vênus e Terra"], answer: 1 },
+      { question: "O movimento de translação da Terra dura aproximadamente:", options: ["24 horas", "30 dias", "365 dias e 6 horas", "100 dias"], answer: 2 },
+      { question: "Qual planeta gira 'deitado' devido à extrema inclinação de seu eixo?", options: ["Urano", "Netuno", "Saturno", "Vênus"], answer: 0 },
+      { question: "Plutão deixou de ser considerado um planeta principal e passou a ser:", options: ["Planeta anão", "Cometa", "Asteroide", "Satélite"], answer: 0 },
+      { question: "De que são feitos principalmente os cometas?", options: ["Rocha pura", "Gelo, poeira e gases congelados", "Metal líquido", "Gás hélio"], answer: 1 }
+    ],
+    expert: [
+      { question: "Qual é a velocidade aproximada da luz no vácuo?", options: ["150.000 km/s", "300.000 km/s", "500.000 km/s", "1.000.000 km/s"], answer: 1 },
+      { question: "Qual planeta gira no sentido horário (rotação retrógrada)?", options: ["Vênus", "Marte", "Júpiter", "Netuno"], answer: 0 },
+      { question: "Qual é a maior lua de todo o Sistema Solar?", options: ["Titã", "Ganimedes", "Calisto", "Ío"], answer: 1 },
+      { question: "Qual região marca a fronteira de influência magnética e solar?", options: ["Cinturão de Kuiper", "Nuvem de Oort", "Heliopausa", "Nébula de Órion"], answer: 2 },
+      { question: "Qual planeta possui o menor período de translação (ano mais curto)?", options: ["Mercúrio", "Vênus", "Marte", "Plutão"], answer: 0 },
+      { question: "Qual é a força responsável por manter os planetas em órbita do Sol?", options: ["Força magnética", "Força gravitacional", "Pressão atmosférica", "Força centrífuga"], answer: 1 },
+      { question: "As manchas escuras na superfície do Sol são chamadas de:", options: ["C crateras", "Manchas solares", "Erupções solares", "Corona"], answer: 1 },
+      { question: "Qual elemento químico é o mais abundante na composição do Sol?", options: ["Oxigênio", "Hélio", "Hidrogênio", "Carbono"], answer: 2 }
+    ]
+  };
+
+  let score = 0;
+  let combo = 0;
+  let highScore = localStorage.getItem('quiz_high_score') || 0;
+  let currentLevel = "facil";
+  let currentQuestionObj = null;
+
+  // Histórico de perguntas usadas para não repetir rápido
+  const askedHistory = {
+    facil: new Set(),
+    medio: new Set(),
+    dificil: new Set(),
+    expert: new Set()
+  };
+
+  let timerInterval = null;
+  let timeRemainingMs = 0;
+  let totalTimeMs = 0;
+  const timePerLevel = { facil: 15, medio: 12, dificil: 10, expert: 8 };
+
+  const startScreen = document.getElementById('start-screen');
+  const quizScreen = document.getElementById('quiz-screen');
+  const endScreen = document.getElementById('end-screen');
+  const cardElement = document.querySelector('.card');
+
+  const startBtn = document.getElementById('start-btn');
+  const restartBtn = document.getElementById('restart-btn');
+
+  const questionText = document.getElementById('question-text');
+  const optionsContainer = document.getElementById('options-container');
+  const scoreDisplay = document.getElementById('score');
+  const comboBadge = document.getElementById('combo-badge');
+  const levelDisplay = document.getElementById('level-display');
+  
+  const timerBar = document.getElementById('timer-bar');
+  const timerNum = document.getElementById('timer-num');
+  
+  const feedbackDisplay = document.getElementById('feedback');
+  const finalScoreDisplay = document.getElementById('final-score');
+  const highScoreStart = document.getElementById('high-score-start');
+  const highScoreEnd = document.getElementById('high-score-end');
+
+  highScoreStart.textContent = highScore;
+
+  startBtn.addEventListener('click', () => { playSound('click'); startGame(); });
+  restartBtn.addEventListener('click', () => { playSound('click'); startGame(); });
+
+  function startGame() {
+    score = 0;
+    combo = 0;
+    currentLevel = "facil";
+    
+    // Reseta históricos de perguntas
+    Object.keys(askedHistory).forEach(lvl => askedHistory[lvl].clear());
+    
+    startScreen.classList.add('hidden');
+    endScreen.classList.add('hidden');
+    quizScreen.classList.remove('hidden');
+    
+    updateScoreUI();
+    nextTurn();
+  }
+
+  function updateLevel() {
+    if (score < 40) {
+      currentLevel = "facil";
+      levelDisplay.textContent = "🟢 Fácil";
+    } else if (score < 90) {
+      currentLevel = "medio";
+      levelDisplay.textContent = "🟡 Médio";
+    } else if (score < 150) {
+      currentLevel = "dificil";
+      levelDisplay.textContent = "🟠 Difícil";
+    } else {
+      currentLevel = "expert";
+      levelDisplay.textContent = "🔴 Expert";
+    }
+  }
+
+  function updateScoreUI() {
+    scoreDisplay.textContent = `Pontos: ${score}`;
+    if (combo >= 2) {
+      comboBadge.classList.remove('hidden');
+      comboBadge.textContent = `🔥 Combo x${combo}`;
+    } else {
+      comboBadge.classList.add('hidden');
+    }
+  }
+
+  // SORTEIO INFINITO: Recicla as perguntas continuamente sem esgotar
+  function getRandomQuestion() {
+    const pool = questionBank[currentLevel];
+    const history = askedHistory[currentLevel];
+    
+    let available = pool.filter(q => !history.has(q.question));
+    
+    // Se todas do nível atual já foram feitas, limpa o histórico do nível e reinicia o ciclo
+    if (available.length === 0) {
+      history.clear();
+      available = pool;
+    }
+    
+    const randomIndex = Math.floor(Math.random() * available.length);
+    const selected = available[randomIndex];
+    history.add(selected.question);
+    
+    return selected;
+  }
+
+  function startTimer() {
+    clearInterval(timerInterval);
+    const seconds = timePerLevel[currentLevel];
+    totalTimeMs = seconds * 1000;
+    timeRemainingMs = totalTimeMs;
+
+    updateTimerUI();
+
+    timerInterval = setInterval(() => {
+      timeRemainingMs -= 100;
+
+      if (timeRemainingMs <= 0) {
+        timeRemainingMs = 0;
+        updateTimerUI();
+        clearInterval(timerInterval);
+        timeOut();
+      } else {
+        updateTimerUI();
+      }
+    }, 100);
+  }
+
+  function updateTimerUI() {
+    const secondsLeft = Math.ceil(timeRemainingMs / 1000);
+    timerNum.textContent = secondsLeft;
+
+    const percentage = (timeRemainingMs / totalTimeMs) * 100;
+    timerBar.style.width = `${Math.max(0, percentage)}%`;
+
+    if (percentage > 50) {
+      timerBar.style.background = "linear-gradient(90deg, #4caf50, #8bc34a)";
+    } else if (percentage > 25) {
+      timerBar.style.background = "linear-gradient(90deg, #ffc107, #ff9800)";
+    } else {
+      timerBar.style.background = "linear-gradient(90deg, #f44336, #e91e63)";
+    }
+  }
+
+  function timeOut() {
+    playSound('wrong');
+    cardElement.classList.add('shake');
+    setTimeout(() => cardElement.classList.remove('shake'), 500);
+
+    const buttons = optionsContainer.querySelectorAll('button');
+    buttons.forEach(btn => btn.disabled = true);
+
+    feedbackDisplay.textContent = "⌛ O tempo acabou! Fim de jogo. ❌";
+    feedbackDisplay.style.color = "#c62828";
+
+    setTimeout(endGame, 1500);
+  }
+
+  function nextTurn() {
+    updateLevel();
+    updateScoreUI();
+    feedbackDisplay.textContent = "";
+    
+    currentQuestionObj = getRandomQuestion();
+    questionText.textContent = currentQuestionObj.question;
+    
+    optionsContainer.innerHTML = "";
+    currentQuestionObj.options.forEach((option, index) => {
+      const btn = document.createElement('button');
+      btn.classList.add('option-btn');
+      btn.textContent = option;
+      btn.addEventListener('click', () => selectAnswer(index, btn));
+      optionsContainer.appendChild(btn);
+    });
+
+    startTimer();
+  }
+
+  function selectAnswer(selectedIndex, clickedBtn) {
+    clearInterval(timerInterval);
+    
+    const buttons = optionsContainer.querySelectorAll('button');
+    buttons.forEach(btn => btn.disabled = true);
+
+    if (selectedIndex === currentQuestionObj.answer) {
+      playSound('correct');
+      clickedBtn.classList.add('btn-correct');
+      
+      combo++;
+      const basePoints = { facil: 10, medio: 15, dificil: 20, expert: 25 }[currentLevel];
+      const comboBonus = (combo > 1) ? combo * 2 : 0;
+      const earned = basePoints + comboBonus;
+      score += earned;
+      
+      updateScoreUI();
+      
+      feedbackDisplay.textContent = `¡Acertou! +${earned} pts ${combo > 1 ? '🔥' : '🚀'}`;
+      feedbackDisplay.style.color = "#2e7d32";
+
+      setTimeout(nextTurn, 1200);
+    } else {
+      playSound('wrong');
+      clickedBtn.classList.add('btn-wrong');
+      buttons[currentQuestionObj.answer].classList.add('btn-correct');
+      
+      cardElement.classList.add('shake');
+      setTimeout(() => cardElement.classList.remove('shake'), 500);
+
+      combo = 0;
+      feedbackDisplay.textContent = "Resposta incorreta! Fim de jogo. ❌";
+      feedbackDisplay.style.color = "#c62828";
+
+      setTimeout(endGame, 1600);
+    }
+  }
+
+  function endGame() {
+    clearInterval(timerInterval);
+    
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem('quiz_high_score', highScore);
+    }
+
+    quizScreen.classList.add('hidden');
+    endScreen.classList.remove('hidden');
+    
+    finalScoreDisplay.textContent = `Sua jornada espacial terminou com ${score} pontos!`;
+    highScoreEnd.textContent = highScore;
+  }
+
+});document.addEventListener('DOMContentLoaded', () => {
+
   // Banco de perguntas por níveis de dificuldade
   const questionBank = {
     facil: [

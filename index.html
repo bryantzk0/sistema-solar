@@ -7,41 +7,51 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <div class="stars-container" id="stars"></div>
+
   <header>
     <h1>🚀 Quiz Espacial: Desafio Infinito</h1>
     <p>Ciências - 6º Ano do Ensino Fundamental</p>
   </header>
 
   <main>
-    <!-- Tela de Início -->
     <section id="start-screen" class="card">
       <h2>Bem-vindo, Astronauta! 👨‍🚀👩‍🚀</h2>
-      <p>Teste seus conhecimentos! A cada acerto, as perguntas ficam mais difíceis e o tempo diminui. Até onde você consegue chegar?</p>
-      <button id="start-btn" class="btn">Iniciar Missão</button>
+      <p>Perguntas infinitas! A cada acerto, a dificuldade aumenta e o tempo acelera. Quantas você consegue acertar em sequência?</p>
+      <div class="high-score-box">🏆 Maior Recorde: <span id="high-score-start">0</span> pts</div>
+      <button id="start-btn" class="btn btn-primary">🚀 Iniciar Missão</button>
     </section>
 
-    <!-- Tela do Jogo -->
     <section id="quiz-screen" class="card hidden">
       <div id="game-info">
         <span id="score">Pontos: 0</span>
-        <span id="timer-display">⏱️ Tempo: <strong id="timer">15</strong>s</span>
-        <span id="level-display">Nível: 🟢 Fácil</span>
+        <span id="combo-badge" class="badge-combo hidden">🔥 Combo x1</span>
+        <span id="level-display">🟢 Fácil</span>
       </div>
+
+      <div class="timer-bar-container">
+        <div id="timer-bar" class="timer-bar"></div>
+      </div>
+      <div class="timer-text-container">
+        <span>⏱️ Tempo: <strong id="timer-num">15</strong>s</span>
+      </div>
+
       <h2 id="question-text">Carregando pergunta...</h2>
       <div id="options-container" class="options-grid"></div>
       <p id="feedback" class="feedback-text"></p>
     </section>
 
-    <!-- Tela Final -->
     <section id="end-screen" class="card hidden">
-      <h2>Missão Concluída! 🎉</h2>
-      <p id="final-score">Sua jornada terminou com 0 pontos!</p>
-      <button id="restart-btn" class="btn">Jogar Novamente</button>
+      <h2>💥 Fim da Missão!</h2>
+      <p id="final-score" class="final-score-text">Sua jornada terminou com 0 pontos!</p>
+      <div class="high-score-box">🏆 Seu Recorde Atual: <span id="high-score-end">0</span> pts</div>
+      <button id="restart-btn" class="btn btn-primary">🔄 Jogar Novamente</button>
     </section>
   </main>
 
   <footer>
-    <p>Projeto Educativo - Desenvolvido para o 6º Ano</p>
+    <p>Projeto Educativo de Ciências • 6º Ano</p>
   </footer>
 
   <script src="script.js"></script>

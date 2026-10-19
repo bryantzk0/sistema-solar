@@ -1,130 +1,153 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial', sans-serif;
+// Banco de perguntas organizado por níveis de dificuldade
+const questionBank = {
+  facil: [
+    { question: "Qual é o maior planeta do Sistema Solar?", options: ["Terra", "Júpiter", "Marte", "Saturno"], answer: 1 },
+    { question: "Qual planeta é conhecido como o 'Planeta Vermelho'?", options: ["Marte", "Vênus", "Mercúrio", "Netuno"], answer: 0 },
+    { question: "O Sol é classificado astrofisicamente como:", options: ["Um planeta", "Um cometa", "Uma estrela", "Um satélite"], answer: 2 },
+    { question: "Qual planeta possui anéis exuberantes e bem visíveis?", options: ["Urano", "Saturno", "Terra", "Vênus"], answer: 1 },
+    { question: "Qual é o planeta em que vivemos?", options: ["Marte", "Terra", "Júpiter", "Vênus"], answer: 1 }
+  ],
+  medio: [
+    { question: "Qual é o planeta mais quente do Sistema Solar?", options: ["Mercúrio", "Vênus", "Marte", "Júpiter"], answer: 1 },
+    { question: "O movimento que a Terra faz ao redor do Sol chama-se:", options: ["Rotação", "Translação", "Gravidade", "Precessão"], answer: 1 },
+    { question: "Quanto tempo a luz do Sol leva para chegar até a Terra?", options: ["Aproximadamente 8 minutos", "1 hora", "Instantaneamente", "24 horas"], answer: 0 },
+    { question: "Qual é o único satélite natural da Terra?", options: ["Fobos", "Europa", "Lua", "Titã"], answer: 2 },
+    { question: "Qual é o planeta mais próximo do Sol?", options: ["Vênus", "Terra", "Mercúrio", "Marte"], answer: 2 }
+  ],
+  dificil: [
+    { question: "Qual planeta do Sistema Solar tem o dia mais curto (rotação rápida)?", options: ["Terra", "Júpiter", "Marte", "Netuno"], answer: 1 },
+    { question: "Em qual planeta está localizado o Monte Olimpo, o maior vulcão do Sistema Solar?", options: ["Vênus", "Marte", "Mercúrio", "Júpiter"], answer: 1 },
+    { question: "Qual destes planetas é classificado como um 'gigante gelado'?", options: ["Saturno", "Júpiter", "Urano", "Marte"], answer: 2 },
+    { question: "O cinturão de asteroides principal fica localizado entre quais planetas?", options: ["Terra e Marte", "Marte e Júpiter", "Júpiter e Saturno", "Vênus e Terra"], answer: 1 },
+    { question: "O movimento de rotação da Terra em torno do seu próprio eixo leva cerca de:", options: ["12 horas", "24 horas", "365 dias", "30 dias"], answer: 1 }
+  ],
+  expert: [
+    { question: "Qual é a velocidade aproximada da luz no vácuo?", options: ["150.000 km/s", "300.000 km/s", "500.000 km/s", "1.000.000 km/s"], answer: 1 },
+    { question: "Qual planeta gira em sentido horário em torno de si mesmo (rotação retrógrada)?", options: ["Vênus", "Marte", "Júpiter", "Netuno"], answer: 0 },
+    { question: "Qual é a maior lua de todo o Sistema Solar?", options: ["Titã", "Ganimedes", "Calisto", "Ío"], answer: 1 },
+    { question: "Qual destas regiões marca o limite de influência gravitacional do Sol?", options: ["Cinturão de Kuiper", "Nuvem de Oort", "Heliopausa", "Nébula de Órion"], answer: 1 },
+    { question: "Qual planeta possui o menor período de translação (ano mais curto)?", options: ["Mercúrio", "Vênus", "Marte", "Plutão"], answer: 0 }
+  ]
+};
+
+// Estado do Jogo
+let score = 0;
+let currentLevel = "facil";
+let currentQuestionObj = null;
+let askedHistory = new Set();
+
+// Elementos do DOM
+const startScreen = document.getElementById('start-screen');
+const quizScreen = document.getElementById('quiz-screen');
+const endScreen = document.getElementById('end-screen');
+
+const startBtn = document.getElementById('start-btn');
+const restartBtn = document.getElementById('restart-btn');
+
+const questionText = document.getElementById('question-text');
+const optionsContainer = document.getElementById('options-container');
+const scoreDisplay = document.getElementById('score');
+const levelDisplay = document.getElementById('level-display');
+const feedbackDisplay = document.getElementById('feedback');
+const finalScoreDisplay = document.getElementById('final-score');
+
+// Eventos
+startBtn.addEventListener('click', startGame);
+restartBtn.addEventListener('click', startGame);
+
+function startGame() {
+  score = 0;
+  currentLevel = "facil";
+  askedHistory.clear();
+  
+  startScreen.classList.add('hidden');
+  endScreen.classList.add('hidden');
+  quizScreen.classList.remove('hidden');
+  
+  nextTurn();
 }
 
-body {
-  background: linear-gradient(135deg, #0d1b2a, #1b263b, #415a77);
-  color: #ffffff;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px;
-}
-
-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-
-header h1 {
-  color: #ffca28;
-  font-size: 2rem;
-  margin-bottom: 5px;
-}
-
-header p {
-  color: #e0e0e0;
-  font-size: 1.1rem;
-}
-
-.card {
-  background-color: #ffffff;
-  color: #333333;
-  border-radius: 15px;
-  padding: 25px;
-  max-width: 500px;
-  width: 100%;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-  text-align: center;
-}
-
-.hidden {
-  display: none !important;
-}
-
-#game-info {
-  display: flex;
-  justify-content: space-between;
-  font-weight: bold;
-  font-size: 1.1rem;
-  color: #1b263b;
-  margin-bottom: 20px;
-  background-color: #f0f4f8;
-  padding: 10px 15px;
-  border-radius: 8px;
-}
-
-#question-text {
-  font-size: 1.25rem;
-  margin-bottom: 20px;
-  color: #0d1b2a;
-}
-
-.options-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-}
-
-.btn, .option-btn {
-  background-color: #ff7043;
-  color: white;
-  border: none;
-  padding: 14px 20px;
-  font-size: 1.1rem;
-  font-weight: bold;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: transform 0.1s, background-color 0.2s;
-}
-
-.btn:hover {
-  background-color: #f4511e;
-  transform: scale(1.03);
-}
-
-.option-btn {
-  background-color: #42a5f5;
-  text-align: left;
-}
-
-.option-btn:hover:not(:disabled) {
-  background-color: #1e88e5;
-  transform: scale(1.02);
-}
-
-.option-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.feedback-text {
-  margin-top: 20px;
-  font-size: 1.2rem;
-  font-weight: bold;
-  min-height: 28px;
-}
-
-footer {
-  margin-top: 20px;
-  font-size: 0.9rem;
-  color: #e0e0e0;
-}
-
-/* Adaptabilidade para telas pequenas */
-@media (max-width: 480px) {
-  .card {
-    padding: 18px;
+// Atualiza a dificuldade com base na pontuação acumulada
+function updateLevel() {
+  if (score < 30) {
+    currentLevel = "facil";
+    levelDisplay.textContent = "Nível: 🟢 Fácil";
+  } else if (score < 70) {
+    currentLevel = "medio";
+    levelDisplay.textContent = "Nível: 🟡 Médio";
+  } else if (score < 120) {
+    currentLevel = "dificil";
+    levelDisplay.textContent = "Nível: 🟠 Difícil";
+  } else {
+    currentLevel = "expert";
+    levelDisplay.textContent = "Nível: 🔴 Expert";
   }
-  header h1 {
-    font-size: 1.5rem;
+}
+
+// Sorteia pergunta sem repetir imediatamente
+function getRandomQuestion() {
+  const pool = questionBank[currentLevel];
+  let available = pool.filter(q => !askedHistory.has(q.question));
+  
+  // Se todas do nível já foram feitas, limpa o histórico do nível para continuar infinito
+  if (available.length === 0) {
+    pool.forEach(q => askedHistory.delete(q.question));
+    available = pool;
   }
-  #question-text {
-    font-size: 1.1rem;
+  
+  const randomIndex = Math.floor(Math.random() * available.length);
+  const selected = available[randomIndex];
+  askedHistory.add(selected.question);
+  
+  return selected;
+}
+
+function nextTurn() {
+  updateLevel();
+  feedbackDisplay.textContent = "";
+  scoreDisplay.textContent = `Pontos: ${score}`;
+  
+  currentQuestionObj = getRandomQuestion();
+  questionText.textContent = currentQuestionObj.question;
+  
+  optionsContainer.innerHTML = "";
+  currentQuestionObj.options.forEach((option, index) => {
+    const btn = document.createElement('button');
+    btn.classList.add('option-btn');
+    btn.textContent = option;
+    btn.addEventListener('click', () => selectAnswer(index));
+    optionsContainer.appendChild(btn);
+  });
+}
+
+function selectAnswer(selectedIndex) {
+  const buttons = optionsContainer.querySelectorAll('button');
+  buttons.forEach(btn => btn.disabled = true);
+
+  if (selectedIndex === currentQuestionObj.answer) {
+    // Pontuação por acerto de acordo com o nível
+    const pointsPerLevel = { facil: 10, medio: 15, dificil: 20, expert: 25 };
+    const earned = pointsPerLevel[currentLevel];
+    score += earned;
+    
+    feedbackDisplay.textContent = `¡Acertou! +${earned} pts 🚀`;
+    feedbackDisplay.style.color = "#2e7d32";
+
+    setTimeout(() => {
+      nextTurn(); // Avança para a próxima pergunta infinitamente
+    }, 1200);
+  } else {
+    feedbackDisplay.textContent = "Fim de jogo! Você errou. ❌";
+    feedbackDisplay.style.color = "#c62828";
+
+    setTimeout(() => {
+      endGame();
+    }, 1500);
   }
+}
+
+function endGame() {
+  quizScreen.classList.add('hidden');
+  endScreen.classList.remove('hidden');
+  finalScoreDisplay.textContent = `Sua jornada espacial terminou com ${score} pontos!`;
 }

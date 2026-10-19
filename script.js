@@ -1,4 +1,4 @@
-// Banco de perguntas organizado por níveis de dificuldade
+// Banco de perguntas por níveis de dificuldade
 const questionBank = {
   facil: [
     { question: "Qual é o maior planeta do Sistema Solar?", options: ["Terra", "Júpiter", "Marte", "Saturno"], answer: 1 },
@@ -36,6 +36,11 @@ let currentLevel = "facil";
 let currentQuestionObj = null;
 let askedHistory = new Set();
 
+// Controle do Cronômetro
+let timerInterval = null;
+let timeLeft = 15;
+const timePerLevel = { facil: 15, medio: 12, dificil: 10, expert: 8 };
+
 // Elementos do DOM
 const startScreen = document.getElementById('start-screen');
 const quizScreen = document.getElementById('quiz-screen');
@@ -48,6 +53,8 @@ const questionText = document.getElementById('question-text');
 const optionsContainer = document.getElementById('options-container');
 const scoreDisplay = document.getElementById('score');
 const levelDisplay = document.getElementById('level-display');
+const timerDisplay = document.getElementById('timer');
+const timerContainer = document.getElementById('timer-display');
 const feedbackDisplay = document.getElementById('feedback');
 const finalScoreDisplay = document.getElementById('final-score');
 
@@ -89,7 +96,6 @@ function getRandomQuestion() {
   const pool = questionBank[currentLevel];
   let available = pool.filter(q => !askedHistory.has(q.question));
   
-  // Se todas do nível já foram feitas, limpa o histórico do nível para continuar infinito
   if (available.length === 0) {
     pool.forEach(q => askedHistory.delete(q.question));
     available = pool;
@@ -100,6 +106,41 @@ function getRandomQuestion() {
   askedHistory.add(selected.question);
   
   return selected;
+}
+
+// Inicia a contagem regressiva
+function startTimer() {
+  clearInterval(timerInterval);
+  timeLeft = timePerLevel[currentLevel];
+  timerDisplay.textContent = timeLeft;
+  timerContainer.classList.remove('timer-warning');
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    timerDisplay.textContent = timeLeft;
+
+    if (timeLeft <= 3) {
+      timerContainer.classList.add('timer-warning');
+    }
+
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      timeOut();
+    }
+  }, 1000);
+}
+
+// Trata estouro do tempo
+function timeOut() {
+  const buttons = optionsContainer.querySelectorAll('button');
+  buttons.forEach(btn => btn.disabled = true);
+
+  feedbackDisplay.textContent = "⌛ O tempo acabou! Fim de jogo. ❌";
+  feedbackDisplay.style.color = "#c62828";
+
+  setTimeout(() => {
+    endGame();
+  }, 1500);
 }
 
 function nextTurn() {
@@ -118,14 +159,17 @@ function nextTurn() {
     btn.addEventListener('click', () => selectAnswer(index));
     optionsContainer.appendChild(btn);
   });
+
+  startTimer();
 }
 
 function selectAnswer(selectedIndex) {
+  clearInterval(timerInterval);
+  
   const buttons = optionsContainer.querySelectorAll('button');
   buttons.forEach(btn => btn.disabled = true);
 
   if (selectedIndex === currentQuestionObj.answer) {
-    // Pontuação por acerto de acordo com o nível
     const pointsPerLevel = { facil: 10, medio: 15, dificil: 20, expert: 25 };
     const earned = pointsPerLevel[currentLevel];
     score += earned;
@@ -134,10 +178,10 @@ function selectAnswer(selectedIndex) {
     feedbackDisplay.style.color = "#2e7d32";
 
     setTimeout(() => {
-      nextTurn(); // Avança para a próxima pergunta infinitamente
+      nextTurn();
     }, 1200);
   } else {
-    feedbackDisplay.textContent = "Fim de jogo! Você errou. ❌";
+    feedbackDisplay.textContent = "Fim de jogo! Resposta incorreta. ❌";
     feedbackDisplay.style.color = "#c62828";
 
     setTimeout(() => {
@@ -147,6 +191,7 @@ function selectAnswer(selectedIndex) {
 }
 
 function endGame() {
+  clearInterval(timerInterval);
   quizScreen.classList.add('hidden');
   endScreen.classList.remove('hidden');
   finalScoreDisplay.textContent = `Sua jornada espacial terminou com ${score} pontos!`;
